@@ -589,6 +589,7 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 		if fldOpts.TSDoc != "" {
 			result += "\t/** " + fldOpts.TSDoc + " */\n"
 		}
+
 		if fldOpts.TSTransform != "" {
 			t.logf(depth, "- simple field %s.%s", typeOf.Name(), field.Name)
 			err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
@@ -599,15 +600,21 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 			t.logf(depth, "- simple field %s.%s", typeOf.Name(), field.Name)
 			err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
 		} else if field.Type.Kind() == reflect.Struct { // Struct:
-			t.logf(depth, "- struct %s.%s (%s)", typeOf.Name(), field.Name, field.Type.String())
-			typeScriptChunk, err := t.convertType(depth+1, field.Type, customCode)
-			if err != nil {
-				return "", err
+			types := strings.Split(field.Type.String(), ".")
+			if len(types) > 0 && types[0] == "null" {
+				t.logf(depth, "- simple field %s.%s", typeOf.Name(), field.Name)
+				err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
+			} else {
+				t.logf(depth, "- struct %s.%s (%s)", typeOf.Name(), field.Name, field.Type.String())
+				typeScriptChunk, err := t.convertType(depth+1, field.Type, customCode)
+				if err != nil {
+					return "", err
+				}
+				if typeScriptChunk != "" {
+					result = typeScriptChunk + "\n" + result
+				}
+				builder.AddStructField(jsonFieldName, field)
 			}
-			if typeScriptChunk != "" {
-				result = typeScriptChunk + "\n" + result
-			}
-			builder.AddStructField(jsonFieldName, field)
 		} else if field.Type.Kind() == reflect.Map {
 			t.logf(depth, "- map field %s.%s", typeOf.Name(), field.Name)
 			// Also convert map key types if needed
