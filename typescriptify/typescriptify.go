@@ -555,6 +555,12 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 	t.logf(depth, "Converting type %s", typeOf.String())
 
 	t.alreadyConverted[typeOf] = true
+	types := strings.Split(typeOf.String(), ".")
+	if len(types) > 0 {
+		pkgName := types[0]
+		upperCasePkgName := strings.ToUpper(pkgName[:1]) + pkgName[1:]
+		t.Suffix = fmt.Sprintf("%s%s", upperCasePkgName, t.Suffix)
+	}
 
 	entityName := t.Prefix + typeOf.Name() + t.Suffix
 	result := ""
