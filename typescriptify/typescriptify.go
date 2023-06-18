@@ -841,7 +841,7 @@ func (t *typeScriptClassBuilder) AddStructField(fieldName string, field reflect.
 func (t *typeScriptClassBuilder) AddArrayOfStructsField(fieldName string, field reflect.StructField, arrayDepth int) {
 	fieldType := field.Type.Elem().Name()
 	var upperCasePkgName string
-	types := strings.Split(field.Type.String(), ".")
+	types := strings.Split(field.Type.Elem().String(), ".")
 	if len(types) > 0 {
 		pkgName := types[0]
 		upperCasePkgName = strings.ToUpper(pkgName[:1]) + pkgName[1:]
