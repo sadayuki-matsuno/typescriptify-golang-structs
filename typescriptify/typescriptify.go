@@ -601,8 +601,11 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 			err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
 		} else if field.Type.Kind() == reflect.Struct { // Struct:
 			types := strings.Split(field.Type.String(), ".")
-			if len(types) > 0 && types[0] == "null" {
+			if len(types) > 0 && (types[0] == "null" || types[0] == "time") {
 				t.logf(depth, "- simple field %s.%s", typeOf.Name(), field.Name)
+				if types[0] == "time" {
+					fldOpts.TSType = "string"
+				}
 				err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
 			} else {
 				t.logf(depth, "- struct %s.%s (%s)", typeOf.Name(), field.Name, field.Type.String())
@@ -787,6 +790,8 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 			"Uint64":  "number",
 			"Floa32":  "number",
 			"Float64": "number",
+			"Time":    "string",
+			"time":    "string",
 		}
 		typeScriptType = nullTypes[fieldType]
 	}
