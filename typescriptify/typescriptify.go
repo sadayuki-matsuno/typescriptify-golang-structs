@@ -553,16 +553,16 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 		return "", nil
 	}
 	t.logf(depth, "Converting type %s", typeOf.String())
-
 	t.alreadyConverted[typeOf] = true
-	//types := strings.Split(typeOf.String(), ".")
-	//if len(types) > 0 {
-	//	pkgName := types[0]
-	//	upperCasePkgName := strings.ToUpper(pkgName[:1]) + pkgName[1:]
-	//	t.Suffix = upperCasePkgName + strings.TrimPrefix(t.Suffix, upperCasePkgName)
-	//}
 
-	entityName := t.Prefix + typeOf.Name() + t.Suffix
+	var upperCasePkgName string
+	types := strings.Split(typeOf.String(), ".")
+	if len(types) > 0 {
+		pkgName := types[0]
+		upperCasePkgName = strings.ToUpper(pkgName[:1]) + pkgName[1:]
+	}
+
+	entityName := t.Prefix + typeOf.Name() + upperCasePkgName + t.Suffix
 	result := ""
 	if t.CreateInterface {
 		result += fmt.Sprintf("interface %s {\n", entityName)
@@ -827,9 +827,15 @@ func (t *typeScriptClassBuilder) AddEnumField(fieldName string, field reflect.St
 
 func (t *typeScriptClassBuilder) AddStructField(fieldName string, field reflect.StructField) {
 	fieldType := field.Type.Name()
+	var upperCasePkgName string
+	types := strings.Split(field.Type.String(), ".")
+	if len(types) > 0 {
+		pkgName := types[0]
+		upperCasePkgName = strings.ToUpper(pkgName[:1]) + pkgName[1:]
+	}
 	strippedFieldName := strings.ReplaceAll(fieldName, "?", "")
-	t.addField(fieldName, t.prefix+fieldType+t.suffix)
-	t.addInitializerFieldLine(strippedFieldName, fmt.Sprintf("this.convertValues(source[\"%s\"], %s)", strippedFieldName, t.prefix+fieldType+t.suffix))
+	t.addField(fieldName, t.prefix+fieldType+upperCasePkgName+t.suffix)
+	t.addInitializerFieldLine(strippedFieldName, fmt.Sprintf("this.convertValues(source[\"%s\"], %s)", strippedFieldName, t.prefix+fieldType+upperCasePkgName+t.suffix))
 }
 
 func (t *typeScriptClassBuilder) AddArrayOfStructsField(fieldName string, field reflect.StructField, arrayDepth int) {
