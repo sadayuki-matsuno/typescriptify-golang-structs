@@ -840,9 +840,15 @@ func (t *typeScriptClassBuilder) AddStructField(fieldName string, field reflect.
 
 func (t *typeScriptClassBuilder) AddArrayOfStructsField(fieldName string, field reflect.StructField, arrayDepth int) {
 	fieldType := field.Type.Elem().Name()
+	var upperCasePkgName string
+	types := strings.Split(field.Type.String(), ".")
+	if len(types) > 0 {
+		pkgName := types[0]
+		upperCasePkgName = strings.ToUpper(pkgName[:1]) + pkgName[1:]
+	}
 	strippedFieldName := strings.ReplaceAll(fieldName, "?", "")
-	t.addField(fieldName, fmt.Sprint(t.prefix+fieldType+t.suffix, strings.Repeat("[]", arrayDepth)))
-	t.addInitializerFieldLine(strippedFieldName, fmt.Sprintf("this.convertValues(source[\"%s\"], %s)", strippedFieldName, t.prefix+fieldType+t.suffix))
+	t.addField(fieldName, fmt.Sprint(t.prefix+fieldType+upperCasePkgName+t.suffix, strings.Repeat("[]", arrayDepth)))
+	t.addInitializerFieldLine(strippedFieldName, fmt.Sprintf("this.convertValues(source[\"%s\"], %s)", strippedFieldName, t.prefix+fieldType+upperCasePkgName+t.suffix))
 }
 
 func (t *typeScriptClassBuilder) addInitializerFieldLine(fld, initializer string) {
