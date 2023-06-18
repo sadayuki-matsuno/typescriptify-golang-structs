@@ -794,7 +794,7 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 			"Uint32":  "number | null",
 			"Int64":   "number | null",
 			"Uint64":  "number | null",
-			"Floa32":  "number | null",
+			"Float32": "number | null",
 			"Float64": "number | null",
 			"Time":    "string | null",
 			"Bytes":   "string | null",
