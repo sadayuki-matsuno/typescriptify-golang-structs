@@ -610,7 +610,7 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 			if len(types) > 0 && (types[0] == "null" || types[0] == "time") {
 				t.logf(depth, "- simple field %s.%s", typeOf.Name(), field.Name)
 				if types[0] == "time" {
-					fldOpts.TSType = "string"
+					fldOpts.TSType = "Date"
 				}
 				err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
 			} else {
@@ -796,7 +796,7 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 			"Uint64":  "number | null",
 			"Float32": "number | null",
 			"Float64": "number | null",
-			"Time":    "string | null",
+			"Time":    "Date | null",
 			"Bytes":   "string | null",
 		}
 		typeScriptType = nullTypes[fieldType]
