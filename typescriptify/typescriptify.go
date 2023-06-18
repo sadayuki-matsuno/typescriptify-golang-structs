@@ -770,6 +770,27 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 		typeScriptType = opts.TSType
 	}
 
+	if typeScriptType == "" {
+		nullTypes := map[string]string{
+			"String":  "string",
+			"Bool":    "boolean",
+			"Int":     "number",
+			"Uint":    "number",
+			"Float":   "number",
+			"Int8":    "number",
+			"Uint8":   "number",
+			"Int16":   "number",
+			"Uint16":  "number",
+			"Int32":   "number",
+			"Uint32":  "number",
+			"Int64":   "number",
+			"Uint64":  "number",
+			"Floa32":  "number",
+			"Float64": "number",
+		}
+		typeScriptType = nullTypes[fieldType]
+	}
+
 	if len(typeScriptType) > 0 && len(fieldName) > 0 {
 		strippedFieldName := strings.ReplaceAll(fieldName, "?", "")
 		t.addField(fieldName, typeScriptType)
