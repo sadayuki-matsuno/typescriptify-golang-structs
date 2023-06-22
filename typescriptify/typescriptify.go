@@ -238,35 +238,76 @@ func (t *TypeScriptify) AddType(typeOf reflect.Type) *TypeScriptify {
 	return t
 }
 
-func (t *typeScriptClassBuilder) AddMapField(fieldName string, field reflect.StructField) {
+func (t *typeScriptClassBuilder) AddMapField(fieldName string, field reflect.StructField, typescriptify *TypeScriptify) (typeScriptChunk string) {
 	keyType := field.Type.Key()
 	valueType := field.Type.Elem()
-	valueTypeName := valueType.Name()
+	var upperCasePkgName string
+	pkgNameType := valueType
+	for pkgNameType.Kind() == reflect.Ptr || pkgNameType.Kind() == reflect.Slice || pkgNameType.Kind() == reflect.Array {
+		pkgNameType = pkgNameType.Elem()
+	}
+	types := strings.Split(pkgNameType.String(), ".")
+	if len(types) > 0 {
+		pkgName := types[0]
+		upperCasePkgName = strings.ToUpper(pkgName[:1]) + pkgName[1:]
+	}
+
+	valueTypeName := t.prefix + valueType.Name() + upperCasePkgName + t.suffix
 	if name, ok := t.types[valueType.Kind()]; ok {
 		valueTypeName = name
 	}
 	if valueType.Kind() == reflect.Array || valueType.Kind() == reflect.Slice {
-		valueTypeName = valueType.Elem().Name() + "[]"
+		if valueType.Elem().Kind() == reflect.Ptr {
+			if _, ok := t.types[valueType.Elem().Elem().Kind()]; ok {
+				valueTypeName = valueType.Elem().Elem().Name() + "[]"
+			} else {
+				valueTypeName = t.prefix + valueType.Elem().Elem().Name() + upperCasePkgName + t.suffix + "[]"
+			}
+		} else {
+			if _, ok := t.types[valueType.Elem().Kind()]; ok {
+				valueTypeName = valueType.Elem().Name() + "[]"
+			} else {
+				valueTypeName = t.prefix + valueType.Elem().Name() + upperCasePkgName + t.suffix + "[]"
+			}
+		}
 	}
 	if valueType.Kind() == reflect.Ptr {
-		valueTypeName = valueType.Elem().Name()
+		if _, ok := t.types[valueType.Elem().Kind()]; ok {
+			valueTypeName = valueType.Elem().Name()
+		} else {
+			valueTypeName = t.prefix + valueType.Elem().Name() + upperCasePkgName + t.suffix
+		}
 	}
 	strippedFieldName := strings.ReplaceAll(fieldName, "?", "")
 
-	keyTypeStr := keyType.Name()
+	keyTypeStr := "string"
+	if name, ok := t.types[keyType.Kind()]; ok {
+		keyTypeStr = name
+	}
+
 	// Key should always be string, no need for this:
 	// _, isSimple := t.types[keyType.Kind()]
 	// if !isSimple {
 	// 	keyTypeStr = t.prefix + keyType.Name() + t.suffix
 	// }
 
-	if valueType.Kind() == reflect.Struct {
-		t.fields = append(t.fields, fmt.Sprintf("%s%s: {[key: %s]: %s};", t.indent, fieldName, keyTypeStr, t.prefix+valueTypeName))
-		t.constructorBody = append(t.constructorBody, fmt.Sprintf("%s%sthis.%s = this.convertValues(source[\"%s\"], %s, true);", t.indent, t.indent, strippedFieldName, strippedFieldName, t.prefix+valueTypeName+t.suffix))
+	if valueType.Kind() == reflect.Struct ||
+		(valueType.Kind() == reflect.Ptr && valueType.Elem().Kind() == reflect.Struct) ||
+		(valueType.Kind() == reflect.Slice && valueType.Elem().Kind() == reflect.Struct) ||
+		(valueType.Kind() == reflect.Slice && valueType.Elem().Kind() == reflect.Ptr && valueType.Elem().Elem().Kind() == reflect.Struct) {
+
+		t.fields = append(t.fields, fmt.Sprintf("%s%s: {[key: %s]: %s};", t.indent, fieldName, keyTypeStr, valueTypeName))
+		var err error
+		typeScriptChunk, err = typescriptify.convertType(0, valueType, nil)
+		if err != nil {
+			panic(err)
+		}
+		t.constructorBody = append(t.constructorBody, fmt.Sprintf("%s%sthis.%s = this.convertValues(source[\"%s\"], %s, true);", t.indent, t.indent, strippedFieldName, strippedFieldName, valueTypeName))
 	} else {
 		t.fields = append(t.fields, fmt.Sprintf("%s%s: {[key: %s]: %s};", t.indent, fieldName, keyTypeStr, valueTypeName))
 		t.constructorBody = append(t.constructorBody, fmt.Sprintf("%s%sthis.%s = source[\"%s\"];", t.indent, t.indent, strippedFieldName, strippedFieldName))
 	}
+	return typeScriptChunk
 }
 
 func (t *TypeScriptify) AddEnum(values interface{}) *TypeScriptify {
@@ -349,7 +390,10 @@ func (t *TypeScriptify) Convert(customCode map[string]string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		result += "\n" + strings.Trim(typeScriptCode, " "+t.Indent+"\r\n")
+
+		if 0 < len(typeScriptCode) {
+			result += "\n" + strings.Trim(typeScriptCode, " "+t.Indent+"\r\n")
+		}
 	}
 	return result, nil
 }
@@ -549,10 +593,18 @@ func (t *TypeScriptify) getJSONFieldName(field reflect.StructField, isPtr bool) 
 }
 
 func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode map[string]string) (string, error) {
+	for typeOf.Kind() == reflect.Ptr || typeOf.Kind() == reflect.Slice {
+		typeOf = typeOf.Elem()
+	}
+
+	if _, found := t.kinds[typeOf.Kind()]; found {
+		return "", nil
+	}
+
 	if _, found := t.alreadyConverted[typeOf]; found { // Already converted
 		return "", nil
 	}
-	t.logf(depth, "Converting type %s", typeOf.String())
+	t.logf(depth, "Converting type %s, name %s", typeOf.String(), typeOf.Name())
 	t.alreadyConverted[typeOf] = true
 
 	var upperCasePkgName string
@@ -562,6 +614,9 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 		upperCasePkgName = strings.ToUpper(pkgName[:1]) + pkgName[1:]
 	}
 
+	if len(typeOf.Name()) == 0 {
+		t.logf(depth, "EmptyType :name: %s, string: %s", typeOf.Name(), typeOf.String())
+	}
 	entityName := t.Prefix + typeOf.Name() + upperCasePkgName + t.Suffix
 	result := ""
 	if t.CreateInterface {
@@ -661,7 +716,10 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 				}
 			}
 
-			builder.AddMapField(jsonFieldName, field)
+			typeScriptChunk := builder.AddMapField(jsonFieldName, field, t)
+			if typeScriptChunk != "" {
+				result = typeScriptChunk + "\n" + result
+			}
 		} else if field.Type.Kind() == reflect.Slice || field.Type.Kind() == reflect.Array { // Slice:
 			if field.Type.Elem().Kind() == reflect.Ptr { //extract ptr type
 				field.Type = field.Type.Elem()
