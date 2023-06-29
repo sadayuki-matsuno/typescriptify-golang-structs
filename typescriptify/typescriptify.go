@@ -837,6 +837,7 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 		typeScriptType = opts.TSType
 	}
 
+	var isNull bool
 	if typeScriptType == "" {
 		nullTypes := map[string]string{
 			"String":  "string | null | undefined",
@@ -858,10 +859,14 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 			"Bytes":   "string | null | undefined",
 		}
 		typeScriptType = nullTypes[fieldType]
+		isNull = true
 	}
 
 	if len(typeScriptType) > 0 && len(fieldName) > 0 {
 		strippedFieldName := strings.ReplaceAll(fieldName, "?", "")
+		if isNull {
+			strippedFieldName += "?"
+		}
 		t.addField(fieldName, typeScriptType)
 		if opts.TSTransform == "" {
 			t.addInitializerFieldLine(strippedFieldName, fmt.Sprintf("source[\"%s\"]", strippedFieldName))
