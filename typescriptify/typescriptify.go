@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -385,7 +386,14 @@ func (t *TypeScriptify) Convert(customCode map[string]string) (string, error) {
 		result += "\n" + strings.Trim(typeScriptCode, " "+t.Indent+"\r\n")
 	}
 
-	for _, strctTyp := range t.structTypes {
+	// structTypesを型名でソートして決定的な順序で処理
+	sortedStructTypes := make([]StructType, len(t.structTypes))
+	copy(sortedStructTypes, t.structTypes)
+	sort.Slice(sortedStructTypes, func(i, j int) bool {
+		return sortedStructTypes[i].Type.Name() < sortedStructTypes[j].Type.Name()
+	})
+
+	for _, strctTyp := range sortedStructTypes {
 		typeScriptCode, err := t.convertType(depth, strctTyp.Type, customCode)
 		if err != nil {
 			return "", err
