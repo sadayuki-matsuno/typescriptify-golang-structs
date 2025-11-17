@@ -239,7 +239,7 @@ func (t *TypeScriptify) AddType(typeOf reflect.Type) *TypeScriptify {
 	return t
 }
 
-func (t *typeScriptClassBuilder) AddMapField(fieldName string, field reflect.StructField, typescriptify *TypeScriptify) (typeScriptChunk string) {
+func (t *typeScriptClassBuilder) AddMapField(fieldName string, field reflect.StructField, typescriptify *TypeScriptify) {
 	keyType := field.Type.Key()
 	valueType := field.Type.Elem()
 	var upperCasePkgName string
@@ -298,17 +298,12 @@ func (t *typeScriptClassBuilder) AddMapField(fieldName string, field reflect.Str
 		(valueType.Kind() == reflect.Slice && valueType.Elem().Kind() == reflect.Ptr && valueType.Elem().Elem().Kind() == reflect.Struct) {
 
 		t.fields = append(t.fields, fmt.Sprintf("%s%s: {[key: %s]: %s};", t.indent, fieldName, keyTypeStr, valueTypeName))
-		var err error
-		typeScriptChunk, err = typescriptify.convertType(0, valueType, nil)
-		if err != nil {
-			panic(err)
-		}
+		// Dependencies are already collected and will be processed separately
 		t.constructorBody = append(t.constructorBody, fmt.Sprintf("%s%sthis.%s = this.convertValues(source[\"%s\"], %s, true);", t.indent, t.indent, strippedFieldName, strippedFieldName, valueTypeName))
 	} else {
 		t.fields = append(t.fields, fmt.Sprintf("%s%s: {[key: %s]: %s};", t.indent, fieldName, keyTypeStr, valueTypeName))
 		t.constructorBody = append(t.constructorBody, fmt.Sprintf("%s%sthis.%s = source[\"%s\"];", t.indent, t.indent, strippedFieldName, strippedFieldName))
 	}
-	return typeScriptChunk
 }
 
 func (t *TypeScriptify) AddEnum(values interface{}) *TypeScriptify {
@@ -361,6 +356,71 @@ func (t *TypeScriptify) AddEnumValues(typeOf reflect.Type, values interface{}) *
 	return t
 }
 
+func (t *TypeScriptify) collectTypes(typeOf reflect.Type, allTypes *[]reflect.Type) {
+	// Unwrap pointers and slices
+	for typeOf.Kind() == reflect.Ptr || typeOf.Kind() == reflect.Slice {
+		typeOf = typeOf.Elem()
+	}
+
+	// Skip if already converted or if it's a simple type
+	if _, found := t.kinds[typeOf.Kind()]; found {
+		return
+	}
+
+	if _, found := t.alreadyConverted[typeOf]; found {
+		return
+	}
+
+	// Skip if type has no name (anonymous types)
+	if len(typeOf.Name()) == 0 {
+		return
+	}
+
+	t.alreadyConverted[typeOf] = true
+	*allTypes = append(*allTypes, typeOf)
+
+	// Recursively collect dependencies
+	fields := deepFields(typeOf)
+	for _, field := range fields {
+		fieldType := field.Type
+		if fieldType.Kind() == reflect.Ptr {
+			fieldType = fieldType.Elem()
+		}
+
+		jsonFieldName := t.getJSONFieldName(field, field.Type.Kind() == reflect.Ptr)
+		if len(jsonFieldName) == 0 || jsonFieldName == "-" {
+			continue
+		}
+
+		// Check if it's a struct field
+		if fieldType.Kind() == reflect.Struct {
+			types := strings.Split(fieldType.String(), ".")
+			if len(types) > 0 && types[0] != "null" && types[0] != "time" {
+				t.collectTypes(fieldType, allTypes)
+			}
+		} else if fieldType.Kind() == reflect.Map {
+			// Collect map key and value types
+			if fieldType.Key().Kind() == reflect.Struct || fieldType.Key().Kind() == reflect.Ptr {
+				t.collectTypes(fieldType.Key(), allTypes)
+			}
+			if fieldType.Elem().Kind() == reflect.Struct || fieldType.Elem().Kind() == reflect.Ptr {
+				t.collectTypes(fieldType.Elem(), allTypes)
+			}
+		} else if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array {
+			if fieldType.Elem().Kind() == reflect.Ptr {
+				fieldType = fieldType.Elem()
+			}
+			// Handle nested slices
+			for fieldType.Elem().Kind() == reflect.Slice {
+				fieldType = fieldType.Elem()
+			}
+			if fieldType.Elem().Kind() == reflect.Struct {
+				t.collectTypes(fieldType.Elem(), allTypes)
+			}
+		}
+	}
+}
+
 func (t *TypeScriptify) Convert(customCode map[string]string) (string, error) {
 	if t.CreateFromMethod {
 		fmt.Fprintln(os.Stderr, "FromMethod METHOD IS DEPRECATED AND WILL BE REMOVED!!!!!!")
@@ -386,15 +446,22 @@ func (t *TypeScriptify) Convert(customCode map[string]string) (string, error) {
 		result += "\n" + strings.Trim(typeScriptCode, " "+t.Indent+"\r\n")
 	}
 
-	// structTypesを型名でソートして決定的な順序で処理
-	sortedStructTypes := make([]StructType, len(t.structTypes))
-	copy(sortedStructTypes, t.structTypes)
-	sort.Slice(sortedStructTypes, func(i, j int) bool {
-		return sortedStructTypes[i].Type.Name() < sortedStructTypes[j].Type.Name()
+	// Phase 1: Collect all types (including dependencies)
+	var allTypes []reflect.Type
+	t.alreadyConverted = make(map[reflect.Type]bool)
+	for _, strctTyp := range t.structTypes {
+		t.collectTypes(strctTyp.Type, &allTypes)
+	}
+
+	// Phase 2: Sort all collected types by name
+	sort.Slice(allTypes, func(i, j int) bool {
+		return allTypes[i].Name() < allTypes[j].Name()
 	})
 
-	for _, strctTyp := range sortedStructTypes {
-		typeScriptCode, err := t.convertType(depth, strctTyp.Type, customCode)
+	// Phase 3: Generate TypeScript code in sorted order
+	t.alreadyConverted = make(map[reflect.Type]bool)
+	for _, typ := range allTypes {
+		typeScriptCode, err := t.convertType(depth, typ, customCode)
 		if err != nil {
 			return "", err
 		}
@@ -678,56 +745,13 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 				err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
 			} else {
 				t.logf(depth, "- struct %s.%s (%s)", typeOf.Name(), field.Name, field.Type.String())
-				typeScriptChunk, err := t.convertType(depth+1, field.Type, customCode)
-				if err != nil {
-					return "", err
-				}
-				if typeScriptChunk != "" {
-					result = typeScriptChunk + "\n" + result
-				}
+				// Dependencies are already collected and will be processed separately
 				builder.AddStructField(jsonFieldName, field)
 			}
 		} else if field.Type.Kind() == reflect.Map {
 			t.logf(depth, "- map field %s.%s", typeOf.Name(), field.Name)
-			// Also convert map key types if needed
-			var keyTypeToConvert reflect.Type
-			switch field.Type.Key().Kind() {
-			case reflect.Struct:
-				keyTypeToConvert = field.Type.Key()
-			case reflect.Ptr:
-				keyTypeToConvert = field.Type.Key().Elem()
-			}
-			if keyTypeToConvert != nil {
-				typeScriptChunk, err := t.convertType(depth+1, keyTypeToConvert, customCode)
-				if err != nil {
-					return "", err
-				}
-				if typeScriptChunk != "" {
-					result = typeScriptChunk + "\n" + result
-				}
-			}
-			// Also convert map value types if needed
-			var valueTypeToConvert reflect.Type
-			switch field.Type.Elem().Kind() {
-			case reflect.Struct:
-				valueTypeToConvert = field.Type.Elem()
-			case reflect.Ptr:
-				valueTypeToConvert = field.Type.Elem().Elem()
-			}
-			if valueTypeToConvert != nil {
-				typeScriptChunk, err := t.convertType(depth+1, valueTypeToConvert, customCode)
-				if err != nil {
-					return "", err
-				}
-				if typeScriptChunk != "" {
-					result = typeScriptChunk + "\n" + result
-				}
-			}
-
-			typeScriptChunk := builder.AddMapField(jsonFieldName, field, t)
-			if typeScriptChunk != "" {
-				result = typeScriptChunk + "\n" + result
-			}
+			// Dependencies are already collected and will be processed separately
+			builder.AddMapField(jsonFieldName, field, t)
 		} else if field.Type.Kind() == reflect.Slice || field.Type.Kind() == reflect.Array { // Slice:
 			if field.Type.Elem().Kind() == reflect.Ptr { //extract ptr type
 				field.Type = field.Type.Elem()
@@ -741,13 +765,7 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 
 			if field.Type.Elem().Kind() == reflect.Struct { // Slice of structs:
 				t.logf(depth, "- struct slice %s.%s (%s)", typeOf.Name(), field.Name, field.Type.String())
-				typeScriptChunk, err := t.convertType(depth+1, field.Type.Elem(), customCode)
-				if err != nil {
-					return "", err
-				}
-				if typeScriptChunk != "" {
-					result = typeScriptChunk + "\n" + result
-				}
+				// Dependencies are already collected and will be processed separately
 				builder.AddArrayOfStructsField(jsonFieldName, field, arrayDepth)
 			} else { // Slice of simple fields:
 				t.logf(depth, "- slice field %s.%s", typeOf.Name(), field.Name)
