@@ -670,7 +670,10 @@ func (t *TypeScriptify) convertType(depth int, typeOf reflect.Type, customCode m
 			err = builder.AddSimpleField(jsonFieldName, field, fldOpts)
 		} else if field.Type.Kind() == reflect.Struct { // Struct:
 			types := strings.Split(field.Type.String(), ".")
-			if len(types) > 0 && (types[0] == "null" || types[0] == "time") {
+			typeName := field.Type.Name()
+			isNullPkg := len(types) > 0 && (types[0] == "null" || types[0] == "time")
+			isGenericVal := strings.HasPrefix(typeName, "Val[") && strings.HasSuffix(typeName, "]")
+			if isNullPkg || isGenericVal {
 				t.logf(depth, "- simple field %s.%s", typeOf.Name(), field.Name)
 				if types[0] == "time" {
 					fldOpts.TSType = "Date"
@@ -867,6 +870,33 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 			"Bytes":   "string | null | undefined",
 		}
 		typeScriptType = nullTypes[fieldType]
+		// Handle generic Val[T] types (e.g., null.Val[string] from opt/null package)
+		if typeScriptType == "" && strings.HasPrefix(fieldType, "Val[") && strings.HasSuffix(fieldType, "]") {
+			innerType := fieldType[4 : len(fieldType)-1]
+			genericNullTypes := map[string]string{
+				"string":    "string | null | undefined",
+				"bool":      "boolean | null | undefined",
+				"int":       "number | null | undefined",
+				"int8":      "number | null | undefined",
+				"int16":     "number | null | undefined",
+				"int32":     "number | null | undefined",
+				"int64":     "number | null | undefined",
+				"uint":      "number | null | undefined",
+				"uint8":     "number | null | undefined",
+				"uint16":    "number | null | undefined",
+				"uint32":    "number | null | undefined",
+				"uint64":    "number | null | undefined",
+				"float32":   "number | null | undefined",
+				"float64":   "number | null | undefined",
+				"time.Time": "Date | null | undefined",
+			}
+			if mapped, ok := genericNullTypes[innerType]; ok {
+				typeScriptType = mapped
+			} else {
+				// For enum types or other types, default to string
+				typeScriptType = "string | null | undefined"
+			}
+		}
 		isNull = true
 	}
 

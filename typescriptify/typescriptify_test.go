@@ -49,21 +49,21 @@ func TestTypescriptifyWithTypes(t *testing.T) {
 	converter.CreateConstructor = false
 	converter.BackupDir = ""
 
-	desiredResult := `export class Dummy {
+	desiredResult := `export class DummyTypescriptify {
         something: string;
 }
-export class Address {
+export class AddressTypescriptify {
         duration: number;
         text?: string;
 }
-export class Person {
+export class PersonTypescriptify {
         name: string;
         nicknames: string[];
-		addresses: Address[];
-		address?: Address;
+		addresses: AddressTypescriptify[];
+		address?: AddressTypescriptify;
 		metadata: {[key:string]:string};
-		friends: Person[];
-        a: Dummy;
+		friends: PersonTypescriptify[];
+        a: DummyTypescriptify;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
 }
@@ -80,21 +80,21 @@ func TestTypescriptifyWithCustomImports(t *testing.T) {
 	desiredResult := `
 //import { Decimal } from 'decimal.js'
 
-export class Dummy {
+export class DummyTypescriptify {
         something: string;
 }
-export class Address {
+export class AddressTypescriptify {
         duration: number;
         text?: string;
 }
-export class Person {
+export class PersonTypescriptify {
         name: string;
         nicknames: string[];
-		addresses: Address[];
-		address?: Address;
+		addresses: AddressTypescriptify[];
+		address?: AddressTypescriptify;
 		metadata: {[key:string]:string};
-		friends: Person[];
-        a: Dummy;
+		friends: PersonTypescriptify[];
+        a: DummyTypescriptify;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
 }
@@ -109,21 +109,21 @@ func TestTypescriptifyWithInstances(t *testing.T) {
 	converter.BackupDir = ""
 	converter.CreateConstructor = false
 
-	desiredResult := `class Dummy {
+	desiredResult := `class DummyTypescriptify {
         something: string;
 }
-class Address {
+class AddressTypescriptify {
         duration: number;
         text?: string;
 }
-class Person {
+class PersonTypescriptify {
         name: string;
         nicknames: string[];
-		addresses: Address[];
-		address?: Address;
+		addresses: AddressTypescriptify[];
+		address?: AddressTypescriptify;
 		metadata: {[key:string]:string};
-		friends: Person[];
-        a: Dummy;
+		friends: PersonTypescriptify[];
+        a: DummyTypescriptify;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
 }
@@ -138,21 +138,21 @@ func TestTypescriptifyWithInterfaces(t *testing.T) {
 	converter.BackupDir = ""
 	converter.CreateInterface = true
 
-	desiredResult := `interface Dummy {
+	desiredResult := `interface DummyTypescriptify {
         something: string;
 }
-interface Address {
+interface AddressTypescriptify {
         duration: number;
         text?: string;
 }
-interface Person {
+interface PersonTypescriptify {
         name: string;
         nicknames: string[];
-		addresses: Address[];
-		address?: Address;
+		addresses: AddressTypescriptify[];
+		address?: AddressTypescriptify;
 		metadata: {[key:string]:string};
-		friends: Person[];
-        a: Dummy;
+		friends: PersonTypescriptify[];
+        a: DummyTypescriptify;
 }`
 	testConverter(t, converter, true, desiredResult, nil)
 }
@@ -166,21 +166,21 @@ func TestTypescriptifyWithDoubleClasses(t *testing.T) {
 	converter.CreateConstructor = false
 	converter.BackupDir = ""
 
-	desiredResult := `export class Dummy {
+	desiredResult := `export class DummyTypescriptify {
         something: string;
 }
-export class Address {
+export class AddressTypescriptify {
         duration: number;
         text?: string;
 }
-export class Person {
+export class PersonTypescriptify {
         name: string;
 		nicknames: string[];
-		addresses: Address[];
-		address?: Address;
+		addresses: AddressTypescriptify[];
+		address?: AddressTypescriptify;
 		metadata: {[key:string]:string};
-		friends: Person[];
-        a: Dummy;
+		friends: PersonTypescriptify[];
+        a: DummyTypescriptify;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
 }
@@ -196,7 +196,7 @@ func TestWithPrefixes(t *testing.T) {
 	converter.DontExport = true
 	converter.BackupDir = ""
 
-	desiredResult := `class test_Dummy_test {
+	desiredResult := `class test_DummyTypescriptify_test {
 	something: string;
 
     constructor(source: any = {}) {
@@ -204,7 +204,7 @@ func TestWithPrefixes(t *testing.T) {
         this.something = source["something"];
     }
 }
-class test_Address_test {
+class test_AddressTypescriptify_test {
     duration: number;
 	text?: string;
 
@@ -214,24 +214,24 @@ class test_Address_test {
         this.text = source["text"];
     }
 }
-class test_Person_test {
+class test_PersonTypescriptify_test {
     name: string;
     nicknames: string[];
-    addresses: test_Address_test[];
-    address?: test_Address_test;
+    addresses: test_AddressTypescriptify_test[];
+    address?: test_AddressTypescriptify_test;
     metadata: {[key:string]:string};
-    friends: test_Person_test[];
-	a: test_Dummy_test;
+    friends: test_PersonTypescriptify_test[];
+	a: test_DummyTypescriptify_test;
 
     constructor(source: any = {}) {
         if ('string' === typeof source) source = JSON.parse(source);
         this.name = source["name"];
         this.nicknames = source["nicknames"];
-        this.addresses = this.convertValues(source["addresses"], test_Address_test);
-        this.address = this.convertValues(source["address"], test_Address_test);
+        this.addresses = this.convertValues(source["addresses"], test_AddressTypescriptify_test);
+        this.address = this.convertValues(source["address"], test_AddressTypescriptify_test);
 		this.metadata = JSON.parse(source["metadata"] || "{}");
-		this.friends = this.convertValues(source["friends"], test_Person_test);
-		this.a = this.convertValues(source["a"], test_Dummy_test);
+		this.friends = this.convertValues(source["friends"], test_PersonTypescriptify_test);
+		this.a = this.convertValues(source["a"], test_DummyTypescriptify_test);
     }
 
 	` + tsConvertValuesFunc + `
@@ -242,17 +242,17 @@ class test_Person_test {
 		Metadata:  `{"something": "aaa"}`,
 	})
 	testConverter(t, converter, true, desiredResult, []string{
-		`new test_Person_test()`,
-		`JSON.stringify(new test_Person_test()?.metadata) === "{}"`,
-		`!(new test_Person_test()?.address)`,
-		`!(new test_Person_test()?.addresses)`,
-		`!(new test_Person_test()?.addresses)`,
+		`new test_PersonTypescriptify_test()`,
+		`JSON.stringify(new test_PersonTypescriptify_test()?.metadata) === "{}"`,
+		`!(new test_PersonTypescriptify_test()?.address)`,
+		`!(new test_PersonTypescriptify_test()?.addresses)`,
+		`!(new test_PersonTypescriptify_test()?.addresses)`,
 
-		`new test_Person_test(` + jsn + ` as any)`,
-		`new test_Person_test(` + jsn + ` as any)?.metadata?.something === "aaa"`,
-		`(new test_Person_test(` + jsn + ` as any)?.address as test_Address_test).text === "txt1"`,
-		`new test_Person_test(` + jsn + ` as any)?.addresses?.length === 1`,
-		`(new test_Person_test(` + jsn + ` as any)?.addresses[0] as test_Address_test)?.text === "111"`,
+		`new test_PersonTypescriptify_test(` + jsn + ` as any)`,
+		`new test_PersonTypescriptify_test(` + jsn + ` as any)?.metadata?.something === "aaa"`,
+		`(new test_PersonTypescriptify_test(` + jsn + ` as any)?.address as test_AddressTypescriptify_test).text === "txt1"`,
+		`new test_PersonTypescriptify_test(` + jsn + ` as any)?.addresses?.length === 1`,
+		`(new test_PersonTypescriptify_test(` + jsn + ` as any)?.addresses[0] as test_AddressTypescriptify_test)?.text === "111"`,
 	})
 }
 
@@ -303,6 +303,10 @@ func testConverter(t *testing.T, converter *TypeScriptify, strictMode bool, desi
 }
 
 func testTypescriptExpression(t *testing.T, strictMode bool, baseScript string, tsExpressionAndDesiredResults []string) {
+	if _, err := exec.LookPath("tsc"); err != nil {
+		t.Skip("tsc not found, skipping TypeScript expression test")
+	}
+
 	f, err := ioutil.TempFile(os.TempDir(), "*.ts")
 	assert.Nil(t, err)
 	assert.NotNil(t, f)
@@ -342,7 +346,7 @@ func TestTypescriptifyCustomType(t *testing.T) {
 	converter.BackupDir = ""
 	converter.CreateConstructor = false
 
-	desiredResult := `export class TestCustomType {
+	desiredResult := `export class TestCustomTypeTypescriptify {
         map: {[key: string]: number};
 }`
 	testConverter(t, converter, false, desiredResult, nil)
@@ -358,7 +362,7 @@ func TestDate(t *testing.T) {
 	converter.AddType(reflect.TypeOf(TestCustomType{}))
 	converter.BackupDir = ""
 
-	desiredResult := `export class TestCustomType {
+	desiredResult := `export class TestCustomTypeTypescriptify {
 	time: Date;
 
     constructor(source: any = {}) {
@@ -369,9 +373,9 @@ func TestDate(t *testing.T) {
 
 	jsn := jsonizeOrPanic(TestCustomType{Time: time.Date(2020, 10, 9, 8, 9, 0, 0, time.UTC)})
 	testConverter(t, converter, true, desiredResult, []string{
-		`new TestCustomType(` + jsonizeOrPanic(jsn) + `).time instanceof Date`,
-		//`console.log(new TestCustomType(` + jsonizeOrPanic(jsn) + `).time.toJSON())`,
-		`new TestCustomType(` + jsonizeOrPanic(jsn) + `).time.toJSON() === "2020-10-09T08:09:00.000Z"`,
+		`new TestCustomTypeTypescriptify(` + jsonizeOrPanic(jsn) + `).time instanceof Date`,
+		//`console.log(new TestCustomTypeTypescriptify(` + jsonizeOrPanic(jsn) + `).time.toJSON())`,
+		`new TestCustomTypeTypescriptify(` + jsonizeOrPanic(jsn) + `).time.toJSON() === "2020-10-09T08:09:00.000Z"`,
 	})
 }
 
@@ -393,7 +397,7 @@ func TestDateWithoutTags(t *testing.T) {
 	converter2.BackupDir = ""
 
 	for _, converter := range []*TypeScriptify{converter1, converter2} {
-		desiredResult := `export class TestCustomType {
+		desiredResult := `export class TestCustomTypeTypescriptify {
 	time: Date;
 
     constructor(source: any = {}) {
@@ -404,9 +408,9 @@ func TestDateWithoutTags(t *testing.T) {
 
 		jsn := jsonizeOrPanic(TestCustomType{Time: time.Date(2020, 10, 9, 8, 9, 0, 0, time.UTC)})
 		testConverter(t, converter, true, desiredResult, []string{
-			`new TestCustomType(` + jsonizeOrPanic(jsn) + `).time instanceof Date`,
-			//`console.log(new TestCustomType(` + jsonizeOrPanic(jsn) + `).time.toJSON())`,
-			`new TestCustomType(` + jsonizeOrPanic(jsn) + `).time.toJSON() === "2020-10-09T08:09:00.000Z"`,
+			`new TestCustomTypeTypescriptify(` + jsonizeOrPanic(jsn) + `).time instanceof Date`,
+			//`console.log(new TestCustomTypeTypescriptify(` + jsonizeOrPanic(jsn) + `).time.toJSON())`,
+			`new TestCustomTypeTypescriptify(` + jsonizeOrPanic(jsn) + `).time.toJSON() === "2020-10-09T08:09:00.000Z"`,
 		})
 	}
 }
@@ -422,12 +426,12 @@ func TestRecursive(t *testing.T) {
 	converter.AddType(reflect.TypeOf(Test{}))
 	converter.BackupDir = ""
 
-	desiredResult := `export class Test {
-	children: Test[];
+	desiredResult := `export class TestTypescriptify {
+	children: TestTypescriptify[];
 
     constructor(source: any = {}) {
         if ('string' === typeof source) source = JSON.parse(source);
-        this.children = this.convertValues(source["children"], Test);
+        this.children = this.convertValues(source["children"], TestTypescriptify);
     }
 
 	` + tsConvertValuesFunc + `
@@ -449,7 +453,7 @@ func TestArrayOfArrays(t *testing.T) {
 	converter.AddType(reflect.TypeOf(Keyboard{}))
 	converter.BackupDir = ""
 
-	desiredResult := `export class Key {
+	desiredResult := `export class KeyTypescriptify {
 	key: string;
 
     constructor(source: any = {}) {
@@ -457,12 +461,12 @@ func TestArrayOfArrays(t *testing.T) {
         this.key = source["key"];
     }
 }
-export class Keyboard {
-    keys: Key[][];
+export class KeyboardTypescriptify {
+    keys: KeyTypescriptify[][];
 
     constructor(source: any = {}) {
         if ('string' === typeof source) source = JSON.parse(source);
-        this.keys = this.convertValues(source["keys"], Key);
+        this.keys = this.convertValues(source["keys"], KeyTypescriptify);
     }
 
 	` + tsConvertValuesFunc + `
@@ -483,7 +487,7 @@ func TestFixedArray(t *testing.T) {
 	converter.AddType(reflect.TypeOf(Tmp{}))
 	converter.BackupDir = ""
 
-	desiredResult := `export class Sub {
+	desiredResult := `export class SubTypescriptify {
 
 
     constructor(source: any = {}) {
@@ -491,14 +495,14 @@ func TestFixedArray(t *testing.T) {
 
     }
 }
-export class Tmp {
+export class TmpTypescriptify {
     arr: string[];
-    arr2: Sub[];
+    arr2: SubTypescriptify[];
 
     constructor(source: any = {}) {
         if ('string' === typeof source) source = JSON.parse(source);
         this.arr = source["arr"];
-        this.arr2 = this.convertValues(source["arr2"], Sub);
+        this.arr2 = this.convertValues(source["arr2"], SubTypescriptify);
     }
 
 	` + tsConvertValuesFunc + `
@@ -518,7 +522,7 @@ func TestAny(t *testing.T) {
 	converter.AddType(reflect.TypeOf(Test{}))
 	converter.BackupDir = ""
 
-	desiredResult := `export class Test {
+	desiredResult := `export class TestTypescriptify {
 	field: any;
 
     constructor(source: any = {}) {
@@ -547,7 +551,7 @@ func TestTypeAlias(t *testing.T) {
 	converter.BackupDir = ""
 	converter.CreateConstructor = false
 
-	desiredResult := `export class Person {
+	desiredResult := `export class PersonTypescriptify {
     birth: number;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
@@ -575,7 +579,7 @@ func TestOverrideCustomType(t *testing.T) {
 	converter.BackupDir = ""
 	converter.CreateConstructor = false
 
-	desiredResult := `export class SomeStruct {
+	desiredResult := `export class SomeStructTypescriptify {
     time: number;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
@@ -665,7 +669,7 @@ func TestEnum(t *testing.T) {
 	FRIDAY = 5,
 	SATURDAY = 6,
 }
-export class Holliday {
+export class HollidayTypescriptify {
 	name: string;
 	weekday: Weekday;
 
@@ -727,7 +731,7 @@ func TestConstructorWithReferences(t *testing.T) {
     FRIDAY = 5,
     SATURDAY = 6,
 }
-export class Dummy {
+export class DummyTypescriptify {
     something: string;
 
     constructor(source: any = {}) {
@@ -735,7 +739,7 @@ export class Dummy {
         this.something = source["something"];
     }
 }
-export class Address {
+export class AddressTypescriptify {
     duration: number;
     text?: string;
 
@@ -745,24 +749,24 @@ export class Address {
         this.text = source["text"];
     }
 }
-export class Person {
+export class PersonTypescriptify {
     name: string;
     nicknames: string[];
-    addresses: Address[];
-    address?: Address;
+    addresses: AddressTypescriptify[];
+    address?: AddressTypescriptify;
     metadata: {[key:string]:string};
-    friends: Person[];
-    a: Dummy;
+    friends: PersonTypescriptify[];
+    a: DummyTypescriptify;
 
     constructor(source: any = {}) {
         if ('string' === typeof source) source = JSON.parse(source);
         this.name = source["name"];
         this.nicknames = source["nicknames"];
-        this.addresses = this.convertValues(source["addresses"], Address);
-        this.address = this.convertValues(source["address"], Address);
+        this.addresses = this.convertValues(source["addresses"], AddressTypescriptify);
+        this.address = this.convertValues(source["address"], AddressTypescriptify);
 		this.metadata = JSON.parse(source["metadata"] || "{}");
-        this.friends = this.convertValues(source["friends"], Person);
-        this.a = this.convertValues(source["a"], Dummy);
+        this.friends = this.convertValues(source["friends"], PersonTypescriptify);
+        this.a = this.convertValues(source["a"], DummyTypescriptify);
     }
 
 	` + tsConvertValuesFunc + `
@@ -785,26 +789,26 @@ func TestMaps(t *testing.T) {
 		WithBackupDir("")
 
 	desiredResult := `
-      export class API_Address {
+      export class API_AddressTypescriptify {
           duration: number;
           text?: string;
-      
+
           constructor(source: any = {}) {
               if ('string' === typeof source) source = JSON.parse(source);
               this.duration = source["duration"];
               this.text = source["text"];
 		  }
       }
-      export class API_WithMap {
+      export class API_WithMapTypescriptify {
           simpleMap: {[key: string]: number};
-          mapObjects: {[key: string]: API_Address};
-          ptrMapObjects?: {[key: string]: API_Address};
+          mapObjects: {[key: string]: API_AddressTypescriptify};
+          ptrMapObjects?: {[key: string]: API_AddressTypescriptify};
 
           constructor(source: any = {}) {
               if ('string' === typeof source) source = JSON.parse(source);
               this.simpleMap = source["simpleMap"];
-			  this.mapObjects = this.convertValues(source["mapObjects"], API_Address, true);
-			  this.ptrMapObjects = this.convertValues(source["ptrMapObjects"], API_Address, true);
+			  this.mapObjects = this.convertValues(source["mapObjects"], API_AddressTypescriptify, true);
+			  this.ptrMapObjects = this.convertValues(source["ptrMapObjects"], API_AddressTypescriptify, true);
 		  }
 
 		  ` + tsConvertValuesFunc + `
@@ -818,15 +822,15 @@ func TestMaps(t *testing.T) {
 	}
 
 	testConverter(t, converter, true, desiredResult, []string{
-		`new API_WithMap(` + jsonizeOrPanic(json) + `).simpleMap.aaa == 1`,
-		`(new API_WithMap(` + jsonizeOrPanic(json) + `).mapObjects.bbb) instanceof API_Address`,
-		`!((new API_WithMap(` + jsonizeOrPanic(json) + `).mapObjects.bbb) instanceof API_WithMap)`,
-		`new API_WithMap(` + jsonizeOrPanic(json) + `).mapObjects.bbb.duration == 1`,
-		`new API_WithMap(` + jsonizeOrPanic(json) + `).mapObjects.bbb.text === "txt1"`,
-		`(new API_WithMap(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc) instanceof API_Address`,
-		`!((new API_WithMap(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc) instanceof API_WithMap)`,
-		`new API_WithMap(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc?.duration === 2`,
-		`new API_WithMap(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc?.text === "txt2"`,
+		`new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `).simpleMap.aaa == 1`,
+		`(new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `).mapObjects.bbb) instanceof API_AddressTypescriptify`,
+		`!((new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `).mapObjects.bbb) instanceof API_WithMapTypescriptify)`,
+		`new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `).mapObjects.bbb.duration == 1`,
+		`new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `).mapObjects.bbb.text === "txt1"`,
+		`(new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc) instanceof API_AddressTypescriptify`,
+		`!((new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc) instanceof API_WithMapTypescriptify)`,
+		`new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc?.duration === 2`,
+		`new API_WithMapTypescriptify(` + jsonizeOrPanic(json) + `)?.ptrMapObjects?.ccc?.text === "txt2"`,
 	})
 }
 
@@ -841,7 +845,7 @@ func TestPTR(t *testing.T) {
 	converter.CreateConstructor = false
 	converter.Add(Person{})
 
-	desiredResult := `export class Person {
+	desiredResult := `export class PersonTypescriptify {
     name?: string;
 }`
 	testConverter(t, converter, true, desiredResult, nil)
@@ -862,9 +866,9 @@ func TestAnonymousPtr(t *testing.T) {
 		WithBackupDir("")
 
 	desiredResult := `
-      export class PersonWithPtrName {
+      export class PersonWithPtrNameTypescriptify {
           name: string;
-      
+
           constructor(source: any = {}) {
               if ('string' === typeof source) source = JSON.parse(source);
               this.name = source["name"];
@@ -936,9 +940,9 @@ func TestIgnoredPTR(t *testing.T) {
 	converter.Add(PersonWithIgnoredPtr{})
 
 	desiredResult := `
-      export class PersonWithIgnoredPtr {
+      export class PersonWithIgnoredPtrTypescriptify {
           name: string;
-      
+
           constructor(source: any = {}) {
               if ('string' === typeof source) source = JSON.parse(source);
               this.name = source["name"];
@@ -958,7 +962,7 @@ func TestMapWithPrefix(t *testing.T) {
 	converter := New().WithPrefix("prefix_").Add(Example{})
 
 	desiredResult := `
-export class prefix_Example {
+export class prefix_ExampleTypescriptify {
     variable: {[key: string]: string};
 
     constructor(source: any = {}) {
@@ -980,7 +984,7 @@ func TestFieldNamesWithoutJSONAnnotation(t *testing.T) {
 
 	converter := New().Add(WithoutAnnotation{})
 	desiredResult := `
-export class WithoutAnnotation {
+export class WithoutAnnotationTypescriptify {
     PublicField: string;
 
     constructor(source: any = {}) {
@@ -1004,9 +1008,159 @@ func TestTypescriptifyComment(t *testing.T) {
 	converter.BackupDir = ""
 	converter.CreateConstructor = false
 
-	desiredResult := `export class Person {
+	desiredResult := `export class PersonTypescriptify {
 	/** This is a comment */
 	name: string;
 }`
 	testConverter(t, converter, false, desiredResult, nil)
+}
+
+// Generic nullable type for testing (simulates opt/null.Val[T])
+type Val[T any] struct {
+	value T
+	state int
+}
+
+func testConvertOutput(t *testing.T, converter *TypeScriptify, desiredResult string) {
+	t.Helper()
+	typeScriptCode, err := converter.Convert(nil)
+	assert.Nil(t, err)
+	desiredResult = strings.TrimSpace(desiredResult)
+	typeScriptCode = strings.TrimSpace(typeScriptCode)
+	assert.Equal(t, desiredResult, typeScriptCode)
+}
+
+func TestGenericNullValString(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Name Val[string] `json:"name"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    name: string | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestGenericNullValInt64(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Count Val[int64] `json:"count"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    count: number | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestGenericNullValBool(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Active Val[bool] `json:"active"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    active: boolean | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestGenericNullValFloat64(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Score Val[float64] `json:"score"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    score: number | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestGenericNullValTime(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		CreatedAt Val[time.Time] `json:"createdAt"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    createdAt: Date | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+// CustomEnum simulates a string-based enum type
+type CustomEnum string
+
+func TestGenericNullValEnum(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Status Val[CustomEnum] `json:"status"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    status: string | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestGenericNullValMultipleFields(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Name      Val[string]    `json:"name"`
+		Count     Val[int64]     `json:"count"`
+		Active    Val[bool]      `json:"active"`
+		CreatedAt Val[time.Time] `json:"createdAt"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    name: string | null | undefined;
+    count: number | null | undefined;
+    active: boolean | null | undefined;
+    createdAt: Date | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
 }
