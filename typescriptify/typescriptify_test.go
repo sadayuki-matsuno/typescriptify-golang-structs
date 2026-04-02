@@ -1141,6 +1141,96 @@ func TestGenericNullValEnum(t *testing.T) {
 	testConvertOutput(t, converter, desiredResult)
 }
 
+func TestOmitzeroMakesFieldOptional(t *testing.T) {
+	t.Parallel()
+	type OmitzeroStruct struct {
+		Name  string `json:"name"`
+		Email string `json:"email,omitzero"`
+		Age   int    `json:"age,omitzero"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(OmitzeroStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface OmitzeroStructTypescriptify {
+    name: string;
+    email?: string;
+    age?: number;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestOmitzeroWithNestedStruct(t *testing.T) {
+	t.Parallel()
+	type Inner struct {
+		Value string `json:"value"`
+	}
+	type OmitzeroNested struct {
+		Required Inner `json:"required"`
+		Optional Inner `json:"optional,omitzero"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(OmitzeroNested{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface InnerTypescriptify {
+    value: string;
+}
+interface OmitzeroNestedTypescriptify {
+    required: InnerTypescriptify;
+    optional?: InnerTypescriptify;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestOmitzeroAndOmitemptyBothWork(t *testing.T) {
+	t.Parallel()
+	type MixedOmitStruct struct {
+		Name     string `json:"name"`
+		OldStyle string `json:"oldStyle,omitempty"`
+		NewStyle string `json:"newStyle,omitzero"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(MixedOmitStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface MixedOmitStructTypescriptify {
+    name: string;
+    oldStyle?: string;
+    newStyle?: string;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
+func TestOmitzeroWithNullVal(t *testing.T) {
+	t.Parallel()
+	type OmitzeroNullStruct struct {
+		Name  string     `json:"name"`
+		Score Val[int64] `json:"score,omitzero"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(OmitzeroNullStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface OmitzeroNullStructTypescriptify {
+    name: string;
+    score?: number | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
 func TestGenericNullValMultipleFields(t *testing.T) {
 	t.Parallel()
 	type TestStruct struct {

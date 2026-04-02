@@ -576,14 +576,14 @@ func (t *TypeScriptify) getJSONFieldName(field reflect.StructField, isPtr bool) 
 		if len(jsonTagParts) > 0 {
 			jsonFieldName = strings.Trim(jsonTagParts[0], t.Indent)
 		}
-		hasOmitEmpty := false
+		hasOmitDirective := false
 		ignored := false
 		for _, t := range jsonTagParts {
 			if t == "" {
 				break
 			}
-			if t == "omitempty" {
-				hasOmitEmpty = true
+			if t == "omitempty" || t == "omitzero" {
+				hasOmitDirective = true
 				break
 			}
 			if t == "-" {
@@ -591,7 +591,7 @@ func (t *TypeScriptify) getJSONFieldName(field reflect.StructField, isPtr bool) 
 				break
 			}
 		}
-		if !ignored && isPtr || hasOmitEmpty {
+		if !ignored && isPtr || hasOmitDirective {
 			jsonFieldName = fmt.Sprintf("%s?", jsonFieldName)
 		}
 	} else if /*field.IsExported()*/ field.PkgPath == "" {
