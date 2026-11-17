@@ -873,6 +873,11 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 		// Handle generic Val[T] types (e.g., null.Val[string] from opt/null package)
 		if typeScriptType == "" && strings.HasPrefix(fieldType, "Val[") && strings.HasSuffix(fieldType, "]") {
 			innerType := fieldType[4 : len(fieldType)-1]
+			arrayDepth := 0
+			for strings.HasPrefix(innerType, "[]") {
+				innerType = innerType[2:]
+				arrayDepth++
+			}
 			genericNullTypes := map[string]string{
 				"string":    "string | null | undefined",
 				"bool":      "boolean | null | undefined",
@@ -890,12 +895,13 @@ func (t *typeScriptClassBuilder) AddSimpleField(fieldName string, field reflect.
 				"float64":   "number | null | undefined",
 				"time.Time": "Date | null | undefined",
 			}
-			if mapped, ok := genericNullTypes[innerType]; ok {
-				typeScriptType = mapped
-			} else {
+			mapped, ok := genericNullTypes[innerType]
+			if !ok {
 				// For enum types or other types, default to string
-				typeScriptType = "string | null | undefined"
+				mapped = "string | null | undefined"
 			}
+			const nullSuffix = " | null | undefined"
+			typeScriptType = strings.TrimSuffix(mapped, nullSuffix) + strings.Repeat("[]", arrayDepth) + nullSuffix
 		}
 		isNull = true
 	}
