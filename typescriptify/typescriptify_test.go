@@ -1141,6 +1141,32 @@ func TestGenericNullValEnum(t *testing.T) {
 	testConvertOutput(t, converter, desiredResult)
 }
 
+func TestGenericNullValSlice(t *testing.T) {
+	t.Parallel()
+	type TestStruct struct {
+		Names    Val[[]string]     `json:"names"`
+		Counts   Val[[]int64]      `json:"counts"`
+		Statuses Val[[]CustomEnum] `json:"statuses"`
+		Matrix   Val[[][]string]   `json:"matrix"`
+		Times    Val[[]time.Time]  `json:"times"`
+	}
+
+	converter := New()
+	converter.AddType(reflect.TypeOf(TestStruct{}))
+	converter.BackupDir = ""
+	converter.CreateInterface = true
+	converter.DontExport = true
+
+	desiredResult := `interface TestStructTypescriptify {
+    names: string[] | null | undefined;
+    counts: number[] | null | undefined;
+    statuses: string[] | null | undefined;
+    matrix: string[][] | null | undefined;
+    times: Date[] | null | undefined;
+}`
+	testConvertOutput(t, converter, desiredResult)
+}
+
 func TestOmitzeroMakesFieldOptional(t *testing.T) {
 	t.Parallel()
 	type OmitzeroStruct struct {
